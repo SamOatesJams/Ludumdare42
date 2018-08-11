@@ -121,6 +121,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1532860039}
+  - component: {fileID: 1532860040}
   m_Layer: 0
   m_Name: Map Generator
   m_TagString: Untagged
@@ -141,6 +142,24 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1532860040
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1532860038}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8fd3a1989d7f0a4ab1741d4e5dc4cf7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GridSize: 3
+  StartRoomPrefabs:
+  - {fileID: 114408022018983612, guid: 65d805949f138d24ca278d9293a01536, type: 2}
+  ExitRoomPrefabs:
+  - {fileID: 114553472047995728, guid: 96fa2bc892ba17c41b9523726a79ba55, type: 2}
+  PuzzleRoomPrefabs:
+  - {fileID: 114010964660930252, guid: 5c5199cf6ae1cc746b54dd3b69315004, type: 2}
 --- !u!1 &1575794312
 GameObject:
   m_ObjectHideFlags: 0
