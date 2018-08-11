@@ -22,16 +22,20 @@ public class GroundControlLogin : MonoBehaviour
     /// </summary>
     public void OnConnectButtonClick()
     {
+        var gameSession = GameSession.GetInstance();
+
         int accessCode;
         if (!int.TryParse(AccessCodeField.text, out accessCode))
         {
             AccessCodeField.text = "";
             InvalidCodeText.enabled = true;
+            gameSession.ErrorAudio.Play();
             return;
         }
 
-        GameSession.GetInstance().Seed = accessCode;
-        GameSession.GetInstance().GameMode = GameSession.GameModeType.GroundControl;
+        gameSession.Seed = accessCode;
+        gameSession.GameMode = GameSession.GameModeType.GroundControl;
+        gameSession.ButtonClickAudio.Play();
 
         MapGenerator.SpawnMap();
         Destroy(gameObject);

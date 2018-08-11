@@ -20,6 +20,7 @@ public class MainMenu : MonoBehaviour
         gameSession.Seed = Random.Range(0, int.MaxValue);
         gameSession.SpawnMap = true;
         gameSession.GameMode = GameSession.GameModeType.SpaceStation;
+        gameSession.ButtonClickAudio?.Play();
 
         SceneManager.LoadScene("SpaceStationWorld");
     }
@@ -30,7 +31,9 @@ public class MainMenu : MonoBehaviour
     public void OnEnterJoinGroundClick()
     {
         var gameSession = GameSession.GetInstance();
+        gameSession.ButtonClickAudio?.Play();
         gameSession.GameMode = GameSession.GameModeType.GroundControl;
+
         SceneManager.LoadScene("GroundControlWorld");
     }
 }

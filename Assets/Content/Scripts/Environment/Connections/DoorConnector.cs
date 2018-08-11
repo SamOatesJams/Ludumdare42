@@ -25,6 +25,11 @@ public class DoorConnector : BaseConnector
     /// <summary>
     /// 
     /// </summary>
+    private AudioSource m_audioSource;
+
+    /// <summary>
+    /// 
+    /// </summary>
     private bool m_isLocked;
 
     /// <summary>
@@ -36,6 +41,13 @@ public class DoorConnector : BaseConnector
         if (m_animator == null)
         {
             Debug.LogError($"Failed to find an animator component on the door '{name}'.");
+            return;
+        }
+
+        m_audioSource = GetComponent<AudioSource>();
+        if (m_audioSource == null)
+        {
+            Debug.LogError($"Failed to find audio source on the door '{name}'.");
             return;
         }
 
@@ -73,8 +85,12 @@ public class DoorConnector : BaseConnector
         {
             return;
         }
-
-        m_animator.SetBool(m_parameterHash, !m_isLocked);
+        
+        if (!m_isLocked)
+        {
+            m_animator.SetBool(m_parameterHash, true);
+            m_audioSource.Play();
+        }
     }
 
     /// <summary>

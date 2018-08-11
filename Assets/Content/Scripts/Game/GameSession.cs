@@ -11,6 +11,16 @@ public class GameSession : MonoBehaviour
     /// <summary>
     /// 
     /// </summary>
+    public AudioSource ButtonClickAudio;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public AudioSource ErrorAudio;
+
+    /// <summary>
+    /// 
+    /// </summary>
     private static GameSession s_instance;
 
     /// <summary>
