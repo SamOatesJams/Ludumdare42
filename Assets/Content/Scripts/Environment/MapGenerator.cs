@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Linq;
+using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class MapGenerator : MonoBehaviour
 {
@@ -31,6 +34,16 @@ public class MapGenerator : MonoBehaviour
     /// <summary>
     /// 
     /// </summary>
+    public DoorConnector[] DoorConnectionPrefabs;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public WallConnector[] WallConnectionPrefabs;
+
+    /// <summary>
+    /// 
+    /// </summary>
     private BaseRoom[,] m_tiles;
 
     /// <summary>
@@ -48,11 +61,11 @@ public class MapGenerator : MonoBehaviour
         m_tiles = new BaseRoom[GridSize, GridSize];
 
         // Spawn a start point.
-        var startTile = StartRoomPrefabs[Random.Range(0, StartRoomPrefabs.Length)];
+        var startTile = RandomArrayItem(StartRoomPrefabs);
         SpawnRoom(startTile, 0, Random.Range(0, GridSize));
 
         // Spawn an end point.
-        var exitTile = ExitRoomPrefabs[Random.Range(0, ExitRoomPrefabs.Length)];
+        var exitTile = RandomArrayItem(ExitRoomPrefabs);
         SpawnRoom(exitTile, GridSize - 1, Random.Range(0, GridSize));
 
         // Fill in empty tiles with puzzles.
@@ -65,12 +78,13 @@ public class MapGenerator : MonoBehaviour
                     continue;
                 }
 
-                var puzzleTile = PuzzleRoomPrefabs[Random.Range(0, PuzzleRoomPrefabs.Length)];
+                var puzzleTile = RandomArrayItem(PuzzleRoomPrefabs);
                 SpawnRoom(puzzleTile, x, y);
             }
         }
 
         // Resolve connections.
+        ResolveRoomConnections(startTile, exitTile);
     }
 
     /// <summary>
@@ -92,6 +106,128 @@ public class MapGenerator : MonoBehaviour
     /// <summary>
     /// 
     /// </summary>
+    /// <param name="startRoom"></param>
+    /// <param name="exitRoom"></param>
+    private void ResolveRoomConnections(StartRoom startRoom, ExitRoom exitRoom)
+    {
+        var directions = Enum.GetValues(typeof(RoomConnection.DirectionType))
+            .Cast<RoomConnection.DirectionType>().ToArray();
+
+        // Put walls around the edge of the map
+        for (var x = 0; x < GridSize; ++x)
+        {
+            for (var y = 0; y < GridSize; ++y)
+            {
+                foreach (var direction in directions)
+                {
+                    var room = GetRoom(x, y);
+                    if (!room.HasConnection(direction))
+                    {
+                        continue;
+                    }
+
+                    var adjacentRoom = GetAdjacentRoom(x, y, direction);
+
+                    // Adjacent room has no connection point at the opposite side, set to a wall.
+                    if (adjacentRoom != null && !adjacentRoom.HasConnection(direction.GetOpposite()))
+                    {
+                        room.SetConnection(direction, RandomArrayItem(WallConnectionPrefabs));
+                        continue;
+                    }
+
+                    // adjacent it out of bounds, set to a wall.
+                    if (adjacentRoom == null)
+                    {
+                        room.SetConnection(direction, RandomArrayItem(WallConnectionPrefabs));
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="TItem"></typeparam>
+    /// <param name="items"></param>
+    /// <returns></returns>
+    private TItem RandomArrayItem<TItem>(TItem[] items)
+    {
+        return items[Random.Range(0, items.Length)];
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="room"></param>
+    /// <param name="direction"></param>
+    /// <returns></returns>
+    private BaseRoom GetAdjacentRoom(BaseRoom room, RoomConnection.DirectionType direction)
+    {
+        for (var x = 0; x < GridSize; ++x)
+        {
+            for (var y = 0; y < GridSize; ++y)
+            {
+                if (m_tiles[x, y] == room)
+                {
+                    return GetAdjacentRoom(x, y, direction);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="row"></param>
+    /// <param name="column"></param>
+    /// <param name="direction"></param>
+    /// <returns></returns>
+    private BaseRoom GetAdjacentRoom(int row, int column, RoomConnection.DirectionType direction)
+    {
+        switch (direction)
+        {
+            case RoomConnection.DirectionType.North:
+                return GetRoom(row + 1, column);
+            case RoomConnection.DirectionType.East:
+                return GetRoom(row, column + 1);
+            case RoomConnection.DirectionType.South:
+                return GetRoom(row - 1, column);
+            case RoomConnection.DirectionType.West:
+                return GetRoom(row, column - 1);
+            default:
+                Debug.LogError($"Failed to located adjacent room for the direction '{direction}'.");
+                return null;
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="row"></param>
+    /// <param name="column"></param>
+    /// <returns></returns>
+    private BaseRoom GetRoom(int row, int column)
+    {
+        if (row < 0 || row >= GridSize)
+        {
+            return null;
+        }
+
+        if (column < 0 || column >= GridSize)
+        {
+            return null;
+        }
+
+        return m_tiles[row, column];
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
     /// <param name="template"></param>
     /// <param name="row"></param>
     /// <param name="column"></param>
@@ -108,12 +244,25 @@ public class MapGenerator : MonoBehaviour
 
 #if UNITY_EDITOR
 
+    private bool m_requestMapSpawn;
+
     private void OnGUI()
     {
-        if (GUI.Button(new Rect(10, 10, 120, 30), "Spawn Map"))
+        if (!m_requestMapSpawn && GUI.Button(new Rect(10, 10, 120, 30), "Spawn Map"))
         {
-            SpawnMap();
+            m_requestMapSpawn = true;
         }
+    }
+
+    private void FixedUpdate()
+    {
+        if (!m_requestMapSpawn)
+        {
+            return;
+        }
+
+        SpawnMap();
+        m_requestMapSpawn = false;
     }
 
 #endif

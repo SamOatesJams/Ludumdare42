@@ -1,25 +1,28 @@
 ﻿using UnityEngine;
 
-public class TriggerAnimation : MonoBehaviour
+public class DoorConnector : BaseConnector
 {
     /// <summary>
-    /// The animator of which the entering this trigger will effect.
+    /// The animator component of the door
     /// </summary>
-    public Animator AnimatorToAnimate;
-
-    /// <summary>
-    /// The name of the boolean parameter on the animator we wish to toggle.
-    /// </summary>
-    public string ParameterName;
+    private Animator m_animator;
 
     /// <summary>
     /// 
     /// </summary>
-    private int m_parameterHash;
+    private readonly int m_parameterHash = Animator.StringToHash("isOpen");
 
+    /// <summary>
+    /// 
+    /// </summary>
     private void Start()
     {
-        m_parameterHash = Animator.StringToHash(ParameterName);
+        m_animator = GetComponent<Animator>();
+        if (m_animator == null)
+        {
+            Debug.LogError($"Failed to find an animator component on the door '{name}'.");
+            return;
+        }
     }
 
     /// <summary>
@@ -30,7 +33,7 @@ public class TriggerAnimation : MonoBehaviour
     {
         // TODO: Validate 'other' is the player
 
-        AnimatorToAnimate.SetBool(m_parameterHash, true);
+        m_animator.SetBool(m_parameterHash, true);
     }
 
     /// <summary>
@@ -41,6 +44,6 @@ public class TriggerAnimation : MonoBehaviour
     {
         // TODO: Validate 'other' is the player
 
-        AnimatorToAnimate.SetBool(m_parameterHash, false);
+        m_animator.SetBool(m_parameterHash, false);
     }
 }

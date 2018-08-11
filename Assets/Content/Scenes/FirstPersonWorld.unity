@@ -160,6 +160,10 @@ MonoBehaviour:
   - {fileID: 114553472047995728, guid: 96fa2bc892ba17c41b9523726a79ba55, type: 2}
   PuzzleRoomPrefabs:
   - {fileID: 114010964660930252, guid: 5c5199cf6ae1cc746b54dd3b69315004, type: 2}
+  DoorConnectionPrefabs:
+  - {fileID: 114057312357476482, guid: cbf2756ed1c247847a1f726b536c24f4, type: 2}
+  WallConnectionPrefabs:
+  - {fileID: 114131698769749798, guid: b11c5fb9e6a78cb46902f096c9e24388, type: 2}
 --- !u!1 &1575794312
 GameObject:
   m_ObjectHideFlags: 0

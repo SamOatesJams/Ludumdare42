@@ -12,7 +12,7 @@ public abstract class BaseRoom : MonoBehaviour
     /// <summary>
     /// 
     /// </summary>
-    public void Start()
+    public void Awake()
     {
         foreach (var connection in GetComponentsInChildren<RoomConnection>())
         {
@@ -28,8 +28,18 @@ public abstract class BaseRoom : MonoBehaviour
     /// 
     /// </summary>
     /// <param name="direction"></param>
+    /// <returns></returns>
+    public bool HasConnection(RoomConnection.DirectionType direction)
+    {
+        return m_connections.ContainsKey(direction);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="direction"></param>
     /// <param name="connector"></param>
-    public void SetConnection(RoomConnection.DirectionType direction, GameObject connector)
+    public void SetConnection(RoomConnection.DirectionType direction, BaseConnector connector)
     {
         RoomConnection connection;
         if (!m_connections.TryGetValue(direction, out connection))
@@ -44,7 +54,7 @@ public abstract class BaseRoom : MonoBehaviour
             return;
         }
 
-        var newConnection = Instantiate(connector, connection.transform);
+        var newConnection = Instantiate(connector.gameObject, connection.transform);
         newConnection.transform.localPosition = Vector3.zero;
         newConnection.transform.localRotation = Quaternion.identity;
         newConnection.transform.localScale = Vector3.one;
