@@ -65,18 +65,28 @@ public class MapGenerator : MonoBehaviour
     /// <summary>
     /// 
     /// </summary>
+    public void Start()
+    {
+        if (GameSession.GetInstance().SpawnMap)
+        {
+            SpawnMap();
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
     public void SpawnMap()
     {
+        var gameSession = GameSession.GetInstance();
+        GridSize = gameSession.GridSize;
+
         if (m_tiles != null)
         {
             DeleteMap();
         }
 
-#if UNITY_EDITOR
-        GenerationSeed = Random.Range(0, int.MaxValue);
-#endif
-
-        Random.InitState(GenerationSeed);
+        Random.InitState(gameSession.Seed);
 
         m_tiles = new BaseRoom[GridSize, GridSize];
 
@@ -106,8 +116,14 @@ public class MapGenerator : MonoBehaviour
         // Resolve connections.
         ResolveRoomConnections(startRoom, exitRoom);
 
-        // Spawn Player.
-        SpawnPlayer(startRoom, FirstPersonPlayerPrefab);
+        if (gameSession.GameMode == GameSession.GameModeType.SpaceStation)
+        {
+            // Spawn Player.
+            m_playerController = startRoom.SpawnPlayer(FirstPersonPlayerPrefab);
+        }
+
+        // Unlock the start room door.
+        UnlockDoor(startRoom, RoomConnection.DirectionType.North);
     }
 
     /// <summary>
@@ -140,17 +156,19 @@ public class MapGenerator : MonoBehaviour
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="startRoom"></param>
-    /// <param name="playerPrefab"></param>
-    private void SpawnPlayer(StartRoom startRoom, PlayerController playerPrefab)
+    /// <param name="room"></param>
+    /// <param name="direction"></param>
+    public void UnlockDoor(BaseRoom room, RoomConnection.DirectionType direction)
     {
-        m_playerController = startRoom.SpawnPlayer(playerPrefab);
+        var door = room.GetConnector(direction) as DoorConnector;
+        if (door == null)
+        {
+            return;
+        }
+        door.UnlockDoor(true);
 
-        var startDoor = startRoom.GetConnector(RoomConnection.DirectionType.North) as DoorConnector;
-        startDoor?.UnlockDoor(true);
-
-        var adjecentRoom = GetAdjacentRoom(startRoom, RoomConnection.DirectionType.North);
-        var adjacnetDoor = adjecentRoom?.GetConnector(RoomConnection.DirectionType.South) as DoorConnector;
+        var adjecentRoom = GetAdjacentRoom(room, direction);
+        var adjacnetDoor = adjecentRoom?.GetConnector(direction.GetOpposite()) as DoorConnector;
         adjacnetDoor?.UnlockDoor(true);
     }
 
@@ -365,36 +383,16 @@ public class MapGenerator : MonoBehaviour
         newRoom.transform.localScale = Vector3.one;
         newRoom.name = $"{template.name} [{row}, {column}]";
 
+        var renderMesh = newRoom.GetComponent<MeshRenderer>();
+        if (renderMesh != null)
+        {
+            var shader = GameSession.GetInstance().GameMode == GameSession.GameModeType.GroundControl
+                ? Shader.Find("Unlit/Texture")
+                : Shader.Find("Standard");
+            renderMesh.sharedMaterial.shader = shader;
+        }
+
         m_tiles[row, column] = newRoom;
         return newRoom;
     }
-
-#region Editor Debug
-
-#if UNITY_EDITOR
-
-    private bool m_requestMapSpawn;
-
-    private void OnGUI()
-    {
-        if (!m_requestMapSpawn && GUI.Button(new Rect(10, 10, 120, 30), "Spawn Map"))
-        {
-            m_requestMapSpawn = true;
-        }
-    }
-
-    private void FixedUpdate()
-    {
-        if (!m_requestMapSpawn)
-        {
-            return;
-        }
-
-        SpawnMap();
-        m_requestMapSpawn = false;
-    }
-
-#endif
-
-#endregion
 }

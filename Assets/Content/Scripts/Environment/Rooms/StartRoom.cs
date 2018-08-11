@@ -6,6 +6,11 @@ public class StartRoom : BaseRoom
     /// <summary>
     /// 
     /// </summary>
+    public UnityEngine.UI.Text AccessCodeText;
+
+    /// <summary>
+    /// 
+    /// </summary>
     private PlayerSpawn m_playerSpawn;
 
     /// <summary>
@@ -19,6 +24,8 @@ public class StartRoom : BaseRoom
         {
             Debug.LogError($"Failed to find a player spawn within the start room '{name}'.");
         }
+
+        AccessCodeText.text = GameSession.GetInstance().Seed.ToString();
     }
 
     /// <summary>
