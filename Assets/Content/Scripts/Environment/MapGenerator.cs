@@ -50,7 +50,17 @@ public class MapGenerator : MonoBehaviour
     /// <summary>
     /// 
     /// </summary>
+    public PlayerController FirstPersonPlayerPrefab;
+
+    /// <summary>
+    /// 
+    /// </summary>
     private BaseRoom[,] m_tiles;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    private PlayerController m_playerController;
 
     /// <summary>
     /// 
@@ -95,6 +105,9 @@ public class MapGenerator : MonoBehaviour
 
         // Resolve connections.
         ResolveRoomConnections(startRoom, exitRoom);
+
+        // Spawn Player.
+        SpawnPlayer(startRoom, FirstPersonPlayerPrefab);
     }
 
     /// <summary>
@@ -115,8 +128,30 @@ public class MapGenerator : MonoBehaviour
                 Destroy(room.gameObject);
             }
         }
-
         m_tiles = null;
+
+        if (m_playerController != null)
+        {
+            Destroy(m_playerController.gameObject);
+            m_playerController = null;
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="startRoom"></param>
+    /// <param name="playerPrefab"></param>
+    private void SpawnPlayer(StartRoom startRoom, PlayerController playerPrefab)
+    {
+        m_playerController = startRoom.SpawnPlayer(playerPrefab);
+
+        var startDoor = startRoom.GetConnector(RoomConnection.DirectionType.North) as DoorConnector;
+        startDoor?.UnlockDoor(true);
+
+        var adjecentRoom = GetAdjacentRoom(startRoom, RoomConnection.DirectionType.North);
+        var adjacnetDoor = adjecentRoom?.GetConnector(RoomConnection.DirectionType.South) as DoorConnector;
+        adjacnetDoor?.UnlockDoor(true);
     }
 
     /// <summary>
