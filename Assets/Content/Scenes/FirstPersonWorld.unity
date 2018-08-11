@@ -153,7 +153,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8fd3a1989d7f0a4ab1741d4e5dc4cf7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GridSize: 3
+  GridSize: 5
   StartRoomPrefabs:
   - {fileID: 114408022018983612, guid: 65d805949f138d24ca278d9293a01536, type: 2}
   ExitRoomPrefabs:

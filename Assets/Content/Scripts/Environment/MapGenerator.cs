@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -11,9 +12,14 @@ public class MapGenerator : MonoBehaviour
     private const float c_roomSize = 10.0f;
 
     /// <summary>
+    /// The seed to use for random map generation.
+    /// </summary>
+    public int GenerationSeed;
+
+    /// <summary>
     /// The size of the map to generator
     /// </summary>
-    [Range(3, 7)]
+    [Range(3, 11)]
     public int GridSize = 3;
 
     /// <summary>
@@ -55,25 +61,29 @@ public class MapGenerator : MonoBehaviour
         {
             DeleteMap();
         }
-        
-        Random.InitState(314159);
+
+#if UNITY_EDITOR
+        GenerationSeed = Random.Range(0, int.MaxValue);
+#endif
+
+        Random.InitState(GenerationSeed);
 
         m_tiles = new BaseRoom[GridSize, GridSize];
 
         // Spawn a start point.
-        var startTile = RandomArrayItem(StartRoomPrefabs);
-        SpawnRoom(startTile, 0, Random.Range(0, GridSize));
+        var startTilePrefab = RandomArrayItem(StartRoomPrefabs);
+        var startRoom = SpawnRoom(startTilePrefab, 0, Random.Range(0, GridSize));
 
         // Spawn an end point.
-        var exitTile = RandomArrayItem(ExitRoomPrefabs);
-        SpawnRoom(exitTile, GridSize - 1, Random.Range(0, GridSize));
+        var exitTilePrefab = RandomArrayItem(ExitRoomPrefabs);
+        var exitRoom = SpawnRoom(exitTilePrefab, GridSize - 1, Random.Range(0, GridSize));
 
         // Fill in empty tiles with puzzles.
         for (var x = 0; x < GridSize; ++x)
         {
             for (var y = 0; y < GridSize; ++y)
             {
-                if (m_tiles[x, y] != null)
+                if (GetRoom(x, y) != null)
                 {
                     continue;
                 }
@@ -84,7 +94,7 @@ public class MapGenerator : MonoBehaviour
         }
 
         // Resolve connections.
-        ResolveRoomConnections(startTile, exitTile);
+        ResolveRoomConnections(startRoom, exitRoom);
     }
 
     /// <summary>
@@ -96,7 +106,13 @@ public class MapGenerator : MonoBehaviour
         {
             for (var y = 0; y < m_tiles.GetLength(1); ++y)
             {
-                Destroy(m_tiles[x, y].gameObject);
+                var room = GetRoom(x, y);
+                if (room == null)
+                {
+                    continue;
+                }
+
+                Destroy(room.gameObject);
             }
         }
 
@@ -121,7 +137,7 @@ public class MapGenerator : MonoBehaviour
                 foreach (var direction in directions)
                 {
                     var room = GetRoom(x, y);
-                    if (!room.HasConnection(direction))
+                    if (room?.HasConnection(direction) != true)
                     {
                         continue;
                     }
@@ -139,8 +155,83 @@ public class MapGenerator : MonoBehaviour
                     if (adjacentRoom == null)
                     {
                         room.SetConnection(direction, RandomArrayItem(WallConnectionPrefabs));
-                        continue;
                     }
+                }
+            }
+        }
+
+        // Find a route from start to exit.
+        var maxPathResolve = (GridSize * GridSize) * Enum.GetValues(typeof(RoomConnection.DirectionType)).Length;
+        BaseRoom currentRoom = startRoom;
+        var roomRoute = new Stack<BaseRoom>();
+
+        while (currentRoom != exitRoom)
+        {
+            var openDirections = currentRoom.GetFreeConnectionDirections();
+            if (!openDirections.Any())
+            {
+                if (roomRoute.Count == 0)
+                {
+                    Debug.LogError($"The room '{currentRoom.name}' has no open connections.");
+                    break;
+                }
+
+                currentRoom = roomRoute.Pop();
+                continue;
+            }
+
+            var moveDirection = openDirections[Random.Range(0, openDirections.Count)];
+            var nextRoom = GetAdjacentRoom(currentRoom, moveDirection);
+
+            var doorConnection = RandomArrayItem(DoorConnectionPrefabs);
+            currentRoom.SetConnection(moveDirection, doorConnection);
+            nextRoom.SetConnection(moveDirection.GetOpposite(), doorConnection);
+
+            roomRoute.Push(currentRoom);
+            currentRoom = nextRoom;
+
+            if (--maxPathResolve == 0)
+            {
+                Debug.LogError("Failed to generate a path from start to finish within the maximum number of moves.");
+                break;
+            }
+        }
+
+        // Fill all open connections with walls.
+        for (var x = 0; x < GridSize; ++x)
+        {
+            for (var y = 0; y < GridSize; ++y)
+            {
+                var room = GetRoom(x, y);
+                if (room == null)
+                {
+                    continue;
+                }
+
+                foreach (var direction in room.GetFreeConnectionDirections())
+                {
+                    var wallPrefab = RandomArrayItem(WallConnectionPrefabs);
+                    room.SetConnection(direction, wallPrefab);
+
+                    var adjacentRoom = GetAdjacentRoom(x, y, direction);
+                    if (adjacentRoom?.HasConnection(direction.GetOpposite()) == true)
+                    {
+                        adjacentRoom.SetConnection(direction.GetOpposite(), wallPrefab);
+                    }
+                }
+            }
+        }
+
+        // Remove completely walled rooms
+        for (var x = 0; x < GridSize; ++x)
+        {
+            for (var y = 0; y < GridSize; ++y)
+            {
+                var room = GetRoom(x, y);
+                if (room?.IsBoxedIn() == true)
+                {
+                    Destroy(room.gameObject);
+                    m_tiles[x, y] = null;
                 }
             }
         }
@@ -169,7 +260,7 @@ public class MapGenerator : MonoBehaviour
         {
             for (var y = 0; y < GridSize; ++y)
             {
-                if (m_tiles[x, y] == room)
+                if (GetRoom(x, y) == room)
                 {
                     return GetAdjacentRoom(x, y, direction);
                 }
@@ -212,12 +303,12 @@ public class MapGenerator : MonoBehaviour
     /// <returns></returns>
     private BaseRoom GetRoom(int row, int column)
     {
-        if (row < 0 || row >= GridSize)
+        if (row < 0 || row >= m_tiles.GetLength(0))
         {
             return null;
         }
 
-        if (column < 0 || column >= GridSize)
+        if (column < 0 || column >= m_tiles.GetLength(1))
         {
             return null;
         }
@@ -231,13 +322,16 @@ public class MapGenerator : MonoBehaviour
     /// <param name="template"></param>
     /// <param name="row"></param>
     /// <param name="column"></param>
-    private void SpawnRoom(BaseRoom template, int row, int column)
+    private TRoom SpawnRoom<TRoom>(TRoom template, int row, int column) where TRoom : BaseRoom
     {
         var newRoom = Instantiate(template, transform);
         newRoom.transform.localPosition = new Vector3(column * c_roomSize, 0.0f, row * c_roomSize);
         newRoom.transform.localRotation = Quaternion.identity;
         newRoom.transform.localScale = Vector3.one;
+        newRoom.name = $"{template.name} [{row}, {column}]";
+
         m_tiles[row, column] = newRoom;
+        return newRoom;
     }
 
 #region Editor Debug

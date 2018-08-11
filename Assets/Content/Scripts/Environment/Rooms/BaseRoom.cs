@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public abstract class BaseRoom : MonoBehaviour
@@ -22,6 +23,18 @@ public abstract class BaseRoom : MonoBehaviour
             }
             m_connections[connection.Direction] = connection;
         }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    public List<RoomConnection.DirectionType> GetFreeConnectionDirections()
+    {
+        return m_connections
+            .Where(x => x.Value.transform.childCount == 0)
+            .Select(x => x.Key)
+            .ToList();
     }
 
     /// <summary>
@@ -58,5 +71,19 @@ public abstract class BaseRoom : MonoBehaviour
         newConnection.transform.localPosition = Vector3.zero;
         newConnection.transform.localRotation = Quaternion.identity;
         newConnection.transform.localScale = Vector3.one;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    public bool IsBoxedIn()
+    {
+        if (m_connections.Any(x => x.Value.transform.childCount == 0))
+        {
+            return false;
+        }
+
+        return m_connections.All(x => x.Value.transform.GetChild(0).GetComponent<WallConnector>() != null);
     }
 }
