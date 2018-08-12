@@ -207,6 +207,8 @@ MonoBehaviour:
   DoorConnectionPrefabs:
   - {fileID: 114589381273282644, guid: cbf2756ed1c247847a1f726b536c24f4, type: 2}
   - {fileID: 114909093731667420, guid: 2cf7f24baff0f234592ba51429e822a2, type: 2}
+  - {fileID: 114909093731667420, guid: 2cf7f24baff0f234592ba51429e822a2, type: 2}
+  - {fileID: 114909093731667420, guid: 2cf7f24baff0f234592ba51429e822a2, type: 2}
   WallConnectionPrefabs:
   - {fileID: 114131698769749798, guid: b11c5fb9e6a78cb46902f096c9e24388, type: 2}
   FirstPersonPlayerPrefab: {fileID: 114163958636824958, guid: 2918fc0cc438016458e65e8abec94707,

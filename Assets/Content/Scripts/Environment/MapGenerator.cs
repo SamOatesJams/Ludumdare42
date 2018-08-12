@@ -74,10 +74,12 @@ public class MapGenerator : MonoBehaviour
     public void Start()
     {
         var gameSession = GameSession.GetInstance();
+#if UNITY_EDITOR
         if (gameSession.GameMode == GameSession.GameModeType.Unknown)
         {
             gameSession.GameMode = DevMode;
         }
+#endif
 
         if (gameSession.GameMode == GameSession.GameModeType.SpaceStation)
         {
