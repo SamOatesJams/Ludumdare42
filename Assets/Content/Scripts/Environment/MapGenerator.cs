@@ -216,8 +216,35 @@ public class MapGenerator : MonoBehaviour
             m_playerController = startRoom.SpawnPlayer(FirstPersonPlayerPrefab);
         }
 
-        // Unlock the start room door.
-        UnlockDoor(startRoom, RoomConnection.DirectionType.North);
+        // Unlock all normal doors
+        foreach (var room in m_tiles)
+        {
+            if (room == null)
+            {
+                continue;
+            }
+
+            foreach (var direction in RoomConnection.Directions)
+            {
+                if (!room.HasConnection(direction))
+                {
+                    continue;
+                }
+
+                var door = room.GetConnector(direction) as DoorConnector;
+                if (door == null)
+                {
+                    continue;
+                }
+
+                if (door.Type == DoorConnector.DoorType.Normal
+                    && door.IsLocked)
+                {
+                    UnlockDoor(room, direction);
+                }
+            }
+        }
+        
     }
 
     /// <summary>
@@ -264,6 +291,25 @@ public class MapGenerator : MonoBehaviour
         var adjecentRoom = GetAdjacentRoom(room, direction);
         var adjacnetDoor = adjecentRoom?.GetConnector(direction.GetOpposite()) as DoorConnector;
         adjacnetDoor?.UnlockDoor(true);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="room"></param>
+    /// <param name="direction"></param>
+    public void OpenDoor(BaseRoom room, RoomConnection.DirectionType direction)
+    {
+        var door = room.GetConnector(direction) as DoorConnector;
+        if (door == null)
+        {
+            return;
+        }
+        door.OpenDoor(true, m_playerController);
+
+        var adjecentRoom = GetAdjacentRoom(room, direction);
+        var adjacnetDoor = adjecentRoom?.GetConnector(direction.GetOpposite()) as DoorConnector;
+        adjacnetDoor?.OpenDoor(true, m_playerController);
     }
 
     /// <summary>
@@ -327,7 +373,13 @@ public class MapGenerator : MonoBehaviour
             var moveDirection = openDirections[Random.Range(0, openDirections.Count)];
             var nextRoom = GetAdjacentRoom(currentRoom, moveDirection);
 
-            var doorConnection = RandomArrayItem(DoorConnectionPrefabs);
+            var doorPrefabs = DoorConnectionPrefabs;
+            if (currentRoom == startRoom)
+            {
+                doorPrefabs = doorPrefabs.Where(x => x.Type == DoorConnector.DoorType.Normal).ToArray();
+            }
+
+            var doorConnection = RandomArrayItem(doorPrefabs);
             currentRoom.SetConnection(moveDirection, doorConnection);
             nextRoom.SetConnection(moveDirection.GetOpposite(), doorConnection);
 

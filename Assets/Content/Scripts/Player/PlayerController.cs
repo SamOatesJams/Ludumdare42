@@ -77,4 +77,15 @@ public class PlayerController : MonoBehaviour
             m_camera.transform.rotation = oldCameraRotation;
         }
     }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="unlock"></param>
+    public void UnlockMouse(bool unlock)
+    {
+        Cursor.lockState = unlock
+            ? CursorLockMode.None
+            : CursorLockMode.Locked;
+    }
 }

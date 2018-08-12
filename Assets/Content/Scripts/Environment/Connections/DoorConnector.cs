@@ -2,6 +2,12 @@
 
 public class DoorConnector : BaseConnector
 {
+    public enum DoorType
+    {
+        Normal,
+        Puzzle
+    }
+
     /// <summary>
     /// 
     /// </summary>
@@ -11,6 +17,16 @@ public class DoorConnector : BaseConnector
     /// 
     /// </summary>
     public Light UnlockLight;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public DoorType Type;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public bool IsLocked { get; private set; }
 
     /// <summary>
     /// The animator component of the door
@@ -30,7 +46,7 @@ public class DoorConnector : BaseConnector
     /// <summary>
     /// 
     /// </summary>
-    private bool m_isLocked;
+    private BasePuzzle m_puzzle;
 
     /// <summary>
     /// 
@@ -51,8 +67,19 @@ public class DoorConnector : BaseConnector
             return;
         }
 
-        Marker.sharedMaterial = new Material(Marker.sharedMaterial);
+        if (Type == DoorType.Puzzle)
+        {
+            m_puzzle = GetComponentInChildren<BasePuzzle>();
+            if (m_puzzle == null)
+            {
+                Debug.LogError($"Failed to find puzzle on the puzzle door '{name}'.");
+                return;
+            }
 
+            m_puzzle.gameObject.SetActive(false);
+        }
+
+        Marker.sharedMaterial = new Material(Marker.sharedMaterial);
         UnlockDoor(false);
     }
 
@@ -62,12 +89,32 @@ public class DoorConnector : BaseConnector
     /// <param name="unlock"></param>
     public void UnlockDoor(bool unlock)
     {
-        m_isLocked = !unlock;
+        IsLocked = !unlock;
 
         var color = unlock ? Color.green : Color.red;
         Marker.sharedMaterial.color = color;
         Marker.sharedMaterial.SetColor("_EmissionColor", color);
         UnlockLight.color = color;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="open"></param>
+    /// <param name="playerController"></param>
+    public void OpenDoor(bool open, PlayerController playerController)
+    {
+        m_animator.SetBool(m_parameterHash, open);
+        if (open)
+        {
+            m_audioSource.Play();
+
+            if (m_puzzle != null)
+            {
+                playerController.UnlockMouse(false);
+                m_puzzle.gameObject.SetActive(false);
+            }
+        }
     }
 
     /// <summary>
@@ -81,15 +128,22 @@ public class DoorConnector : BaseConnector
             return;
         }
 
-        if (other.GetComponentInParent<PlayerController>() == null)
+        var playerController = other.GetComponentInParent<PlayerController>();
+        if (playerController == null)
         {
             return;
         }
         
-        if (!m_isLocked)
+        if (!IsLocked)
         {
-            m_animator.SetBool(m_parameterHash, true);
-            m_audioSource.Play();
+            OpenDoor(true, playerController);
+            return;
+        }
+
+        if (m_puzzle != null)
+        {
+            playerController.UnlockMouse(true);
+            m_puzzle.gameObject.SetActive(true);
         }
     }
 
@@ -104,11 +158,18 @@ public class DoorConnector : BaseConnector
             return;
         }
 
-        if (other.GetComponentInParent<PlayerController>() == null)
+        var playerController = other.GetComponentInParent<PlayerController>();
+        if (playerController == null)
         {
             return;
         }
 
-        m_animator.SetBool(m_parameterHash, false);
+        OpenDoor(false, playerController);
+
+        if (m_puzzle != null)
+        {
+            playerController.UnlockMouse(false);
+            m_puzzle.gameObject.SetActive(false);
+        }
     }
 }

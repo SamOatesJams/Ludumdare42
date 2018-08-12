@@ -20,6 +20,19 @@ public class GroundControlLogin : MonoBehaviour
     /// <summary>
     /// 
     /// </summary>
+    public Canvas UserManualCanvas;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public void Start()
+    {
+        UserManualCanvas.enabled = false;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
     public void OnConnectButtonClick()
     {
         var gameSession = GameSession.GetInstance();
@@ -38,6 +51,8 @@ public class GroundControlLogin : MonoBehaviour
         gameSession.ButtonClickAudio.Play();
 
         MapGenerator.SpawnMap();
+
+        UserManualCanvas.enabled = true;
         Destroy(gameObject);
     }
 
