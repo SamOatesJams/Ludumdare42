@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -52,6 +51,13 @@ public class MapGenerator : MonoBehaviour
     /// </summary>
     public PlayerController FirstPersonPlayerPrefab;
 
+#if UNITY_EDITOR
+    /// <summary>
+    /// 
+    /// </summary>
+    public GameSession.GameModeType DevMode;
+#endif
+
     /// <summary>
     /// 
     /// </summary>
@@ -67,9 +73,97 @@ public class MapGenerator : MonoBehaviour
     /// </summary>
     public void Start()
     {
-        if (GameSession.GetInstance().SpawnMap)
+        var gameSession = GameSession.GetInstance();
+        if (gameSession.GameMode == GameSession.GameModeType.Unknown)
+        {
+            gameSession.GameMode = DevMode;
+        }
+
+        if (gameSession.GameMode == GameSession.GameModeType.SpaceStation)
         {
             SpawnMap();
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public void FixedUpdate()
+    {
+        if (m_tiles == null || m_playerController == null)
+        {
+            return;
+        }
+
+        var gameSession = GameSession.GetInstance();
+        if (gameSession.GameMode != GameSession.GameModeType.SpaceStation)
+        {
+            return;
+        }
+
+        var playerPosition = m_playerController.transform.position;
+        var playerRow = (int) (playerPosition.z / c_roomSize);
+        var playerColumn = (int)(playerPosition.x / c_roomSize);
+
+        var playerRoom = GetRoom(playerRow, playerColumn);
+        if (playerRoom == null)
+        {
+            return;
+        }
+
+        var closestDoor = float.MaxValue;
+        var closestRoom = default(BaseRoom);
+
+        foreach (var direction in RoomConnection.Directions)
+        {
+            if (!playerRoom.HasConnection(direction))
+            {
+                continue;
+            }
+
+            var door = playerRoom.GetConnector(direction) as DoorConnector;
+            if (door == null)
+            {
+                continue;
+            }
+
+            var distanceToDoor = Vector3.Distance(door.transform.position, playerPosition);
+            if (distanceToDoor >= closestDoor)
+            {
+                continue;
+            }
+
+            var room = GetAdjacentRoom(playerRow, playerColumn, direction);
+            if (room == null)
+            {
+                continue;
+            }
+
+            closestDoor = distanceToDoor;
+            closestRoom = room;
+        }
+
+        if (closestRoom == null)
+        {
+            return;
+        }
+
+        var enabledRooms = new HashSet<BaseRoom>()
+        {
+            playerRoom,
+            closestRoom
+        };
+
+        for (var row = 0; row < m_tiles.GetLength(0); ++row)
+        {
+            for (var column = 0; column < m_tiles.GetLength(1); ++column)
+            {
+                var room = GetRoom(row, column);
+                if (room != null)
+                {
+                    room.gameObject.SetActive(enabledRooms.Contains(room));
+                }
+            }
         }
     }
 
@@ -179,15 +273,12 @@ public class MapGenerator : MonoBehaviour
     /// <param name="exitRoom"></param>
     private void ResolveRoomConnections(StartRoom startRoom, ExitRoom exitRoom)
     {
-        var directions = Enum.GetValues(typeof(RoomConnection.DirectionType))
-            .Cast<RoomConnection.DirectionType>().ToArray();
-
         // Put walls around the edge of the map
         for (var x = 0; x < GridSize; ++x)
         {
             for (var y = 0; y < GridSize; ++y)
             {
-                foreach (var direction in directions)
+                foreach (var direction in RoomConnection.Directions)
                 {
                     var room = GetRoom(x, y);
                     if (room?.HasConnection(direction) != true)
@@ -214,7 +305,7 @@ public class MapGenerator : MonoBehaviour
         }
 
         // Find a route from start to exit.
-        var maxPathResolve = (GridSize * GridSize) * Enum.GetValues(typeof(RoomConnection.DirectionType)).Length;
+        var maxPathResolve = (GridSize * GridSize) * RoomConnection.Directions.Length;
         BaseRoom currentRoom = startRoom;
         var roomRoute = new Stack<BaseRoom>();
 

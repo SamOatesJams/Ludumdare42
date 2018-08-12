@@ -927,6 +927,7 @@ MonoBehaviour:
   - {fileID: 114131698769749798, guid: b11c5fb9e6a78cb46902f096c9e24388, type: 2}
   FirstPersonPlayerPrefab: {fileID: 114163958636824958, guid: 2918fc0cc438016458e65e8abec94707,
     type: 2}
+  DevMode: 2
 --- !u!1 &1616981182
 GameObject:
   m_ObjectHideFlags: 0

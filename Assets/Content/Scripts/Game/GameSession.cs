@@ -4,6 +4,7 @@ public class GameSession : MonoBehaviour
 {
     public enum GameModeType
     {
+        Unknown,
         SpaceStation,
         GroundControl
     }
@@ -27,16 +28,11 @@ public class GameSession : MonoBehaviour
     /// 
     /// </summary>
     public int Seed { get; set; }
-
+    
     /// <summary>
     /// 
     /// </summary>
-    public bool SpawnMap { get; set; }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    public GameModeType GameMode { get; set; }
+    public GameModeType GameMode { get; set; } = GameModeType.Unknown;
 
     /// <summary>
     /// 

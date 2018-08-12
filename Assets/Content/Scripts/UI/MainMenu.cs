@@ -18,7 +18,6 @@ public class MainMenu : MonoBehaviour
     {
         var gameSession = GameSession.GetInstance();
         gameSession.Seed = Random.Range(0, int.MaxValue);
-        gameSession.SpawnMap = true;
         gameSession.GameMode = GameSession.GameModeType.SpaceStation;
         gameSession.ButtonClickAudio?.Play();
 

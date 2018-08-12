@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using UnityEngine;
 
 public class RoomConnection : MonoBehaviour
@@ -15,7 +16,22 @@ public class RoomConnection : MonoBehaviour
     /// The direction of the connector.
     /// </summary>
     public DirectionType Direction;
-    
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public static DirectionType[] Directions { get; }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    static RoomConnection()
+    {
+        Directions = Enum.GetValues(typeof(DirectionType))
+            .Cast<DirectionType>()
+            .ToArray();
+    }
+
     #region Editor Debug
 
 #if UNITY_EDITOR
