@@ -41,11 +41,6 @@ public class DoorConnector : BaseConnector
     /// <summary>
     /// 
     /// </summary>
-    private AudioSource m_audioSource;
-
-    /// <summary>
-    /// 
-    /// </summary>
     private BasePuzzle m_puzzle;
 
     /// <summary>
@@ -57,13 +52,6 @@ public class DoorConnector : BaseConnector
         if (m_animator == null)
         {
             Debug.LogError($"Failed to find an animator component on the door '{name}'.");
-            return;
-        }
-
-        m_audioSource = GetComponent<AudioSource>();
-        if (m_audioSource == null)
-        {
-            Debug.LogError($"Failed to find audio source on the door '{name}'.");
             return;
         }
 
@@ -107,7 +95,7 @@ public class DoorConnector : BaseConnector
         m_animator.SetBool(m_parameterHash, open);
         if (open)
         {
-            m_audioSource.Play();
+            GameSession.GetInstance().DoorOpenAudio?.Play();
 
             if (m_puzzle != null)
             {
@@ -132,6 +120,17 @@ public class DoorConnector : BaseConnector
         if (playerController == null)
         {
             return;
+        }
+
+        var gameSession = GameSession.GetInstance();
+        if (gameSession.GetTimeRemaining() == null)
+        {
+            gameSession.StartTimer();
+            var playerUi = playerController.GetComponentInChildren<SpaceStationPlayerUI>();
+            if (playerUi?.TimerText != null)
+            {
+                playerUi.TimerPanel.gameObject.SetActive(true);
+            }
         }
         
         if (!IsLocked)

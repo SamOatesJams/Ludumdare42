@@ -50,6 +50,8 @@ public class GroundControlLogin : MonoBehaviour
         gameSession.GameMode = GameSession.GameModeType.GroundControl;
         gameSession.ButtonClickAudio.Play();
 
+        Debug.Log($"Using access code: {accessCode}");
+
         MapGenerator.SpawnMap();
 
         UserManualCanvas.enabled = true;

@@ -210,12 +210,14 @@ public class MapGenerator : MonoBehaviour
         }
 
         // Resolve connections.
-        ResolveRoomConnections(startRoom, exitRoom);
+        var routeLength = ResolveRoomConnections(startRoom, exitRoom);
+        Debug.Log($"Generated map route length: {routeLength}");
 
         if (gameSession.GameMode == GameSession.GameModeType.SpaceStation)
         {
             // Spawn Player.
             m_playerController = startRoom.SpawnPlayer(FirstPersonPlayerPrefab);
+            gameSession.SetTimerLength(Mathf.Max((routeLength - 2), 3) * 20);
         }
 
         // Unlock all normal doors
@@ -247,6 +249,7 @@ public class MapGenerator : MonoBehaviour
             }
         }
         
+        gameSession.BackgroundMusic?.Play();
     }
 
     /// <summary>
@@ -319,7 +322,7 @@ public class MapGenerator : MonoBehaviour
     /// </summary>
     /// <param name="startRoom"></param>
     /// <param name="exitRoom"></param>
-    private void ResolveRoomConnections(StartRoom startRoom, ExitRoom exitRoom)
+    private int ResolveRoomConnections(StartRoom startRoom, ExitRoom exitRoom)
     {
         // Put walls around the edge of the map
         for (var x = 0; x < GridSize; ++x)
@@ -433,6 +436,67 @@ public class MapGenerator : MonoBehaviour
                 }
             }
         }
+
+        return CalculateShortestRoute(startRoom, exitRoom, 0, new HashSet<BaseRoom>());
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="currentRoom"></param>
+    /// <param name="exitRoom"></param>
+    /// <param name="routeLength"></param>
+    /// <param name="visited"></param>
+    /// <returns></returns>
+    private int CalculateShortestRoute(BaseRoom currentRoom, BaseRoom exitRoom, int routeLength, HashSet<BaseRoom> visited)
+    {
+        var nextRooms = new Dictionary<BaseRoom, bool>();
+        foreach (var direction in RoomConnection.Directions)
+        {
+            if (!currentRoom.HasConnection(direction))
+            {
+                continue;
+            }
+
+            var door = currentRoom.GetConnector(direction) as DoorConnector;
+            if (door == null)
+            {
+                continue;
+            }
+
+            var nextRoom = GetAdjacentRoom(currentRoom, direction);
+            if (nextRoom == null)
+            {
+                continue;
+            }
+
+            if (visited.Contains(nextRoom))
+            {
+                continue;
+            }
+
+            if (nextRoom == exitRoom)
+            {
+                return routeLength + (door.IsLocked ? 1 : 0);
+            }
+
+            nextRooms.Add(nextRoom, door.IsLocked);
+        }
+
+        visited.Add(currentRoom);
+        foreach (var roomEntry in nextRooms)
+        {
+            var room = roomEntry.Key;
+            var doorLocked = roomEntry.Value;
+
+            var length = CalculateShortestRoute(room, exitRoom, routeLength + (doorLocked ? 1 : 0), visited);
+            if (length < int.MaxValue)
+            {
+                return length;
+            }
+        }
+
+        return int.MaxValue;
     }
 
     /// <summary>

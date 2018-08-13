@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class GameSession : MonoBehaviour
 {
@@ -22,6 +24,21 @@ public class GameSession : MonoBehaviour
     /// <summary>
     /// 
     /// </summary>
+    public AudioSource BackgroundMusic;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public AudioSource MenuMusic;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public AudioSource DoorOpenAudio;
+
+    /// <summary>
+    /// 
+    /// </summary>
     private static GameSession s_instance;
 
     /// <summary>
@@ -38,6 +55,16 @@ public class GameSession : MonoBehaviour
     /// 
     /// </summary>
     public int GridSize { get; set; }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    private float? m_timerStartTime;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public float TimerLength { get; private set; }
 
     /// <summary>
     /// 
@@ -68,5 +95,37 @@ public class GameSession : MonoBehaviour
             return instanceGo.AddComponent<GameSession>();
         }
         return s_instance;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="seconds"></param>
+    public void SetTimerLength(int seconds)
+    {
+        TimerLength = seconds;
+        m_timerStartTime = null;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public void StartTimer()
+    {
+        m_timerStartTime = Time.time;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    public float? GetTimeRemaining()
+    {
+        if (m_timerStartTime == null)
+        {
+            return null;
+        }
+
+        return TimerLength - (Time.time - m_timerStartTime.Value);
     }
 }

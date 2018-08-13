@@ -45,8 +45,27 @@ public class PlayerController : MonoBehaviour
             Debug.LogError($"Failed to find a camera in any of the children of the player controller '{name}'.");
             return;
         }
+    }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    public void OnEnable()
+    {
         Cursor.lockState = CursorLockMode.Locked;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Cursor.lockState = Cursor.lockState == CursorLockMode.Locked
+                ? CursorLockMode.None
+                : CursorLockMode.Locked;
+        }
     }
 
     /// <summary>
@@ -54,13 +73,6 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void FixedUpdate()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            Cursor.lockState = Cursor.lockState == CursorLockMode.Locked 
-                ? CursorLockMode.None 
-                : CursorLockMode.Locked;
-        }
-
         m_body.AddRelativeForce(Vector3.forward * Input.GetAxis("Vertical") * MoveSpeedScalar, ForceMode.Impulse);
         m_body.AddRelativeForce(Vector3.right * Input.GetAxis("Horizontal") * MoveSpeedScalar, ForceMode.Impulse);
 
