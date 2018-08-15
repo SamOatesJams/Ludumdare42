@@ -43,7 +43,6 @@ public class PlayerController : MonoBehaviour
         if (m_camera == null)
         {
             Debug.LogError($"Failed to find a camera in any of the children of the player controller '{name}'.");
-            return;
         }
     }
 
